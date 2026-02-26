@@ -11,6 +11,7 @@ if str(project_root) not in sys.path:
 import requests
 import pandas as pd
 import time
+from datetime import datetime
 from config.constants import PROTOCOLS, DEFILLAMA_BASE_URL, DATA_RAW_API_DIR
 
 class DeFiLlamaLoader:
@@ -19,7 +20,7 @@ class DeFiLlamaLoader:
         self.save_dir.mkdir(parents=True, exist_ok=True)
         # 初始化 Session，保持连接复用
         self.session = requests.Session()
-        # 设置高仿真的浏览器 Headers，解决 403/429 报错
+        # 设置浏览器 Headers，解决 403/429 报错
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "application/json, text/plain, */*",
@@ -158,6 +159,61 @@ class DeFiLlamaLoader:
         except Exception as e:
             print(f"Exception: {str(e)}")
             return None
+        
+    def fetch_protocol_fees(self, protocol_name, protocol_slug):
+        """
+        对应官方文档:
+        GET /summary/fees/{protocol}
+
+        返回协议 fees / revenue 的历史数据
+        """
+
+        url = f"{DEFILLAMA_BASE_URL}/summary/fees/{protocol_slug}"
+        print(f"\n[Request] Fetching Fees {protocol_name} -> {url}")
+
+        try:
+            response = self.session.get(url, timeout=30)
+
+            if response.status_code == 404:
+                print(f"Fees data not found for {protocol_slug}")
+                return None
+
+            elif response.status_code == 429:
+                print("Rate limited. Sleeping 10s...")
+                time.sleep(10)
+                return self.fetch_protocol_fees(protocol_name, protocol_slug)
+
+            elif response.status_code != 200:
+                print(f"Error {response.status_code}: {response.text[:100]}")
+                return None
+
+            data = response.json()
+
+            # -----------------------------------
+            # 数据解析
+            # -----------------------------------
+            if "totalDataChart" not in data:
+                print("No fees data found.")
+                return None
+
+            df = pd.DataFrame(
+                data["totalDataChart"],
+                columns=["timestamp", "fees"]
+            )
+
+            df["date"] = pd.to_datetime(df["timestamp"], unit="s")
+
+            final_df = df[["date", "fees"]].copy()
+
+            # 去掉未来时间
+            final_df = final_df[final_df["date"] <= pd.Timestamp.now()]
+
+            return final_df
+
+        except Exception as e:
+            print(f"Exception: {str(e)}")
+            return None
+        
 
     def save_to_csv(self, df, filename):
         file_path = self.save_dir / filename
@@ -209,8 +265,29 @@ class DeFiLlamaLoader:
 
         print("\n=== DEX Volume Job Completed ===")
 
+    def run_fees_batch_job(self):
+
+        print("\n=== Starting Fees Batch Job ===")
+
+        for name, info in PROTOCOLS.items():
+
+            slug = info['slug']
+
+            df = self.fetch_protocol_fees(name, slug)
+
+            if df is not None:
+                safe_name = name.lower().replace(" ", "_")
+                filename = f"fees_{safe_name}.csv"
+                self.save_to_csv(df, filename)
+
+            time.sleep(3)
+
+        print("\n=== Fees Batch Job Completed ===")
+
+
 if __name__ == "__main__":
     loader = DeFiLlamaLoader()
 
     #loader.run_tvl_batch_job()
-    loader.run_dex_volume_batch_job()
+    #loader.run_dex_volume_batch_job()
+    

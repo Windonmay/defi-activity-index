@@ -1,0 +1,1 @@
+COMPASS_API_KEY = "MlIvTgc2tjfCcq1AJ1s02SmRkPa2HfE6kOtwmG39"

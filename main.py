@@ -31,8 +31,11 @@ def main():
         #loader.run_tvl_batch_job()
 
         # 3. 运行 Volume 抓取任务
-        loader.run_dex_volume_batch_job()
-        
+        #loader.run_dex_volume_batch_job()
+
+        #抓取fee信息
+        loader.run_fees_batch_job()
+
     except Exception as e:
         print(f"An error occurred: {e}")
 
