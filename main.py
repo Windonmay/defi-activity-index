@@ -33,9 +33,15 @@ def main():
         # 3. 运行 Volume 抓取任务
         #loader.run_dex_volume_batch_job()
 
-        #抓取fee信息
-        loader.run_fees_batch_job()
+        # 4. 抓取fee信息
+        #loader.run_fees_batch_job()
 
+        # 5. 抓取revenue信息
+        #loader.run_revenue_batch_job()
+
+        # 6. 抓取稳定币supply数据
+        loader.run_stablecoin_raw_data_job()
+        
     except Exception as e:
         print(f"An error occurred: {e}")
 

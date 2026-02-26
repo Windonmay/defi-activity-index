@@ -5,6 +5,8 @@ numpy==2.1.2
 # HTTP 请求与 API 交互
 requests==2.32.5
 dune-client==1.10.0
+compass_api_sdk==2.2.22
+defillama_sdk==0.1.4
 
 # 环境变量管理
 python-dotenv>=1.0.0

@@ -13,5 +13,5 @@
 | Compound V3 | 借贷 | 开创性的借贷协议，具有独特的风险管理模型，TVL在借贷赛道名列前茅，提供与Aave有差异的对比维度，数据可得性好。 | Flipside Crypto, Dune Analytics |
 | Uniswap V3 | 去中心化交易所 | 交易量最大的去中心化交易所，主导现货交易市场，流动性深度与费用数据模型成熟。 | Dune Analytics, The Graph |
 | Curve Finance | 去中心化交易所 | 稳定币与锚定资产互换的基石协议，TVL巨大。 | Dune Analytics |
-| MakerDAO | 稳定币 | 最早的DeFi协议之一，以DAI稳定币为核心，收入模式（稳定费）清晰且持续，是DeFi原生稳定币和协议收入的典范。 | Dune Analytics (Makerburn看板) |
+| MakerDAO | 稳定币 | 最早的DeFi协议之一，以DAI稳定币为核心，收入模式（稳定费）清晰且持续，是DeFi原生稳定币和协议收入的典范。现在更名为Sky。 | Dune Analytics (Makerburn看板) |
 | Lido | 流动性质押 | 以太坊流动性质押赛道的绝对主导者（>70%市场份额），代表快速增长的LSDeFi领域，其质押衍生品（stETH）被广泛使用，收入数据明确。 | Dune Analytics |

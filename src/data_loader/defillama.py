@@ -1,6 +1,7 @@
 import sys
 import os
 from pathlib import Path
+from defillama_sdk import DefiLlama
 
 # 路径配置
 current_file = Path(__file__).resolve()
@@ -214,6 +215,99 @@ class DeFiLlamaLoader:
             print(f"Exception: {str(e)}")
             return None
         
+    def fetch_protocol_revenue(self, protocol_name, protocol_slug):
+        """
+        获取 Protocol Revenue (Daily)
+        对应接口:
+        GET /summary/fees/{protocol}?dataType=dailyRevenue
+        """
+
+        url = f"{DEFILLAMA_BASE_URL}/summary/fees/{protocol_slug}?dataType=dailyRevenue"
+        print(f"\n[Request] Fetching Revenue {protocol_name} -> {url}")
+
+        try:
+            response = self.session.get(url, timeout=30)
+
+            if response.status_code == 404:
+                print(f"Revenue not found for {protocol_slug}")
+                return None
+
+            elif response.status_code == 429:
+                print("Rate limited. Sleeping 10s...")
+                time.sleep(10)
+                return self.fetch_protocol_revenue(protocol_name, protocol_slug)
+
+            elif response.status_code != 200:
+                print(f"Error {response.status_code}: {response.text[:100]}")
+                return None
+
+            data = response.json()
+
+            if "totalDataChart" not in data:
+                print("No revenue data found.")
+                return None
+
+            # -----------------------------------
+            # 转换为 DataFrame
+            # -----------------------------------
+            df = pd.DataFrame(
+                data["totalDataChart"],
+                columns=["timestamp", "revenue"]
+            )
+
+            df["date"] = pd.to_datetime(df["timestamp"], unit="s")
+
+            final_df = df[["date", "revenue"]].copy()
+
+            final_df = final_df[final_df["date"] <= pd.Timestamp.now()]
+
+            return final_df
+
+        except Exception as e:
+            print(f"Exception: {str(e)}")
+            return None
+        
+    def run_stablecoin_raw_data_job(self):
+        """
+        Batch Job: 抓取 MakerDAO / DAI 原始数据，并保存 CSV
+        """
+        print("\n=== Starting Stablecoin Raw Data Batch Job ===")
+        print(f"Storage Path: {self.save_dir}")
+
+        # 当前仅处理 DAI，可后续扩展其他 stablecoin
+        stablecoins_to_fetch = [
+            {"name": "MakerDAO", "symbol": "DAI", "asset_id": 5}
+        ]
+
+        for coin in stablecoins_to_fetch:
+            name = coin["name"]
+            symbol = coin["symbol"]
+            asset_id = coin["asset_id"]
+
+            print(f"\n[Processing Stablecoin]: {name} ({symbol})")
+            url = f"https://stablecoins.llama.fi/stablecoin/{asset_id}"
+            print(f"[Request] Fetching {symbol} stablecoin raw data -> {url}")
+
+            try:
+                response = self.session.get(url, timeout=30)
+                response.raise_for_status()
+                data = response.json()
+
+                # 转换为 DataFrame（保留所有字段）
+                df = pd.json_normalize(data)
+
+                # 生成文件名
+                safe_name = name.lower().replace(" ", "_")
+                filename = f"stablecoin_raw_{safe_name}.csv"
+                self.save_to_csv(df, filename)
+
+            except Exception as e:
+                print(f"An error occurred for {name}: {e}")
+
+            # 延时，防止 API 封 IP
+            time.sleep(3)
+
+        print("\n=== Stablecoin Raw Data Job Completed ===")
 
     def save_to_csv(self, df, filename):
         file_path = self.save_dir / filename
@@ -283,6 +377,25 @@ class DeFiLlamaLoader:
             time.sleep(3)
 
         print("\n=== Fees Batch Job Completed ===")
+
+    def run_revenue_batch_job(self):
+
+        print("\n=== Starting Protocol Revenue Batch Job ===")
+
+        for name, info in PROTOCOLS.items():
+
+            slug = info["slug"]
+
+            df = self.fetch_protocol_revenue(name, slug)
+
+            if df is not None:
+                safe_name = name.lower().replace(" ", "_")
+                filename = f"revenue_{safe_name}.csv"
+                self.save_to_csv(df, filename)
+
+            time.sleep(3)
+
+        print("\n=== Revenue Job Completed ===")
 
 
 if __name__ == "__main__":
