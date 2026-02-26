@@ -13,8 +13,11 @@ if str(project_root) not in sys.path:
     sys.path.insert(0, str(project_root))
 
 try:
-    from src.data_loader.defillama import DeFiLlamaLoader
-    print("Successfully imported DeFiLlamaLoader")
+    # from src.data_loader.defillama import DeFiLlamaLoader
+    # print("Successfully imported DeFiLlamaLoader")
+    from src.data_loader.dune import DuneLoader
+    print("Successfully imported DuneLoader")
+
 except ImportError as e:
     print(f"ImportError: {e}")
     print(f"Current sys.path: {sys.path}")
@@ -23,27 +26,38 @@ except ImportError as e:
 def main():
     print("=== DeFi Activity Index Data Pipeline ===")
     
+    # try:
+    #     # 1. 初始化加载器
+    #     #loader = DeFiLlamaLoader()
+        
+    #     # 2. 运行 TVL 抓取任务
+    #     #loader.run_tvl_batch_job()
+
+    #     # 3. 运行 Volume 抓取任务
+    #     #loader.run_dex_volume_batch_job()
+
+    #     # 4. 抓取fee信息
+    #     #loader.run_fees_batch_job()
+
+    #     # 5. 抓取revenue信息
+    #     #loader.run_revenue_batch_job()
+
+    #     # 6. 抓取稳定币supply数据
+    #     #loader.run_stablecoin_raw_data_job()
+        
+    # except Exception as e:
+    #     print(f"An error occurred: {e}")
+
+    """
+    测试 DuneLoader 功能
+    """
     try:
-        # 1. 初始化加载器
-        loader = DeFiLlamaLoader()
-        
-        # 2. 运行 TVL 抓取任务
-        #loader.run_tvl_batch_job()
-
-        # 3. 运行 Volume 抓取任务
-        #loader.run_dex_volume_batch_job()
-
-        # 4. 抓取fee信息
-        #loader.run_fees_batch_job()
-
-        # 5. 抓取revenue信息
-        #loader.run_revenue_batch_job()
-
-        # 6. 抓取稳定币supply数据
-        loader.run_stablecoin_raw_data_job()
-        
+        loader = DuneLoader()
+        print("=== Running DuneLoader Batch Job ===")
+        loader.run_batch_job()
+        print("=== DuneLoader Test Completed Successfully ===")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"Error running DuneLoader: {e}")
 
 if __name__ == "__main__":
     main()
