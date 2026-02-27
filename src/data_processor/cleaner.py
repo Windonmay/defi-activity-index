@@ -1,212 +1,268 @@
+"""
+cleaner.py
+Data cleaning module for DeFi Activity Index.
+
+Responsibilities:
+- Load raw data from API and manual sources
+- Standardize date formats and column names
+- Merge protocol-specific data into master dataset
+- Handle missing values (forward-fill, backward-fill)
+"""
+
 import pandas as pd
 import os
 import numpy as np
-import sys
+from pathlib import Path
 
-# ==========================================
-# 1. 配置与初始化
-# ==========================================
-# 获取当前脚本绝对路径: .../defi-activity-index/src/data_processor/cleaner.py
-CURRENT_SCRIPT = os.path.abspath(__file__)
 
-# 向上回退 3 级找到项目根目录
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(CURRENT_SCRIPT)))
-
-# 设定时间范围 (根据你的Specification)
-start_date = '2025-02-26'
-end_date = '2026-02-26'
-date_range = pd.date_range(start=start_date, end=end_date, freq='D')
-
-# 定义数据路径
-API_PATH = os.path.join(PROJECT_ROOT, 'data', 'raw', 'api')
-MANUAL_PATH = os.path.join(PROJECT_ROOT, 'data', 'raw', 'manual')
-OUTPUT_PATH = os.path.join(PROJECT_ROOT, 'data', 'processed')
-
-# 确保输出目录存在
-os.makedirs(OUTPUT_PATH, exist_ok=True)
-
-# 定义协议列表
-protocols = ['aave_v3', 'compound_v3', 'uniswap_v3', 'curve', 'makerdao', 'lido']
-
-# 定义标准列名（目标列名）
-standard_metrics = ['tvl', 'fees', 'revenue', 'dau', 'tx_count', 'core_utility']
-
-# ==========================================
-# 2. 辅助函数：读取与标准化
-# ==========================================
-
-def read_and_standardize(file_path, value_col_name='value'):
+class DataCleaner:
     """
-    读取CSV，确保索引为Datetime，并重命名数值列
-    假设CSV格式为: date, value (或者类似)
+    Clean and merge raw DeFi protocol data.
+    
+    Parameters
+    ----------
+    raw_api_dir : str
+        Path to directory containing API-sourced data (TVL, Fees, Revenue, Volume)
+    raw_manual_dir : str
+        Path to directory containing manually exported data (DAU, Tx Count, etc.)
+    output_dir : str
+        Path to save processed data
+    start_date : str, optional
+        Start of analysis period (default: '2023-01-01')
+    end_date : str, optional
+        End of analysis period (default: '2024-12-31')
     """
-    if not os.path.exists(file_path):
-        print(f"文件缺失: {file_path}")
-        return None
     
-    try:
-        # 读取CSV，尝试解析日期。你需要根据实际CSV格式调整 'date' 列名
-        # 假设第一列是日期，第二列是数值
-        df = pd.read_csv(file_path)
+    def __init__(self, raw_api_dir, raw_manual_dir, output_dir, 
+                 start_date='2023-01-01', end_date='2024-12-31'):
+        self.raw_api_dir = Path(raw_api_dir)
+        self.raw_manual_dir = Path(raw_manual_dir)
+        self.output_dir = Path(output_dir)
+        self.start_date = start_date
+        self.end_date = end_date
+        self.date_range = pd.date_range(start=start_date, end=end_date, freq='D')
         
-        # 自动识别日期列（通常包含 date, time, day 等字眼）
-        date_col = [c for c in df.columns if 'date' in c.lower() or 'day' in c.lower() or 'time' in c.lower()][0]
-        # 自动识别数值列 (排除日期列后的第一列，或者根据名字)
-        val_col = [c for c in df.columns if c != date_col][0]
+        # Protocol list
+        self.protocols = ['aave_v3', 'compound_v3', 'uniswap_v3', 
+                          'curve', 'makerdao', 'lido']
         
-        df[date_col] = pd.to_datetime(df[date_col])
-        df = df.set_index(date_col)
+        # Ensure output directory exists
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+    
+    
+    def read_and_standardize(self, file_path, value_col_name='value'):
+        """
+        Read CSV and standardize to datetime index with single value column.
         
-        # 强制截取我们需要的时间段
-        df = df.sort_index()
+        Parameters
+        ----------
+        file_path : str or Path
+            Path to CSV file
+        value_col_name : str
+            Name for the standardized value column
         
-        # 重命名数值列
-        df = df[[val_col]].rename(columns={val_col: value_col_name})
+        Returns
+        -------
+        pd.DataFrame or None
+            Standardized DataFrame with datetime index, or None if file missing
+        """
+        if not Path(file_path).exists():
+            print(f"  File missing: {file_path}")
+            return None
         
-        # 去重（防止同一天有多条数据）
-        df = df[~df.index.duplicated(keep='last')]
+        try:
+            df = pd.read_csv(file_path)
+            
+            # Auto-detect date column
+            date_col = [c for c in df.columns 
+                       if any(kw in c.lower() for kw in ['date', 'day', 'time'])][0]
+            
+            # Auto-detect value column (first non-date column)
+            val_col = [c for c in df.columns if c != date_col][0]
+            
+            # Convert to datetime and set index
+            df[date_col] = pd.to_datetime(df[date_col])
+            df = df.set_index(date_col).sort_index()
+            
+            # Rename value column
+            df = df[[val_col]].rename(columns={val_col: value_col_name})
+            
+            # Remove duplicates (keep last)
+            df = df[~df.index.duplicated(keep='last')]
+            
+            return df
+            
+        except Exception as e:
+            print(f" Error reading {file_path}: {e}")
+            return None
+    
+    
+    def load_protocol_data(self, protocol):
+        """
+        Load all data sources for a single protocol.
         
-        return df
-    except Exception as e:
-        print(f"读取错误 {file_path}: {e}")
-        return None
+        Parameters
+        ----------
+        protocol : str
+            Protocol identifier (e.g., 'aave_v3')
+        
+        Returns
+        -------
+        pd.DataFrame
+            Merged DataFrame with all metrics for this protocol
+        """
+        # Create empty DataFrame with full date range
+        protocol_df = pd.DataFrame(index=self.date_range)
+        protocol_df.index.name = 'date'
+        
+        
+        # Load API data
+        
+        
+        # TVL
+        path_tvl = self.raw_api_dir / f"tvl_{protocol}.csv"
+        df_tvl = self.read_and_standardize(path_tvl, 'tvl')
+        if df_tvl is not None:
+            protocol_df = protocol_df.join(df_tvl)
+        
+        # Fees
+        path_fees = self.raw_api_dir / f"fees_{protocol}.csv"
+        df_fees = self.read_and_standardize(path_fees, 'fees')
+        if df_fees is not None:
+            protocol_df = protocol_df.join(df_fees)
+        
+        # Revenue
+        path_rev = self.raw_api_dir / f"revenue_{protocol}.csv"
+        df_rev = self.read_and_standardize(path_rev, 'revenue')
+        if df_rev is not None:
+            protocol_df = protocol_df.join(df_rev)
+        
+        
+        # Load Manual data
+        
+        
+        # DAU
+        path_dau = self.raw_manual_dir / f"{protocol}_dau.csv"
+        df_dau = self.read_and_standardize(path_dau, 'dau')
+        if df_dau is not None:
+            protocol_df = protocol_df.join(df_dau)
+        
+        # Tx Count
+        path_tx = self.raw_manual_dir / f"{protocol}_tx_count.csv"
+        df_tx = self.read_and_standardize(path_tx, 'tx_count')
+        if df_tx is not None:
+            protocol_df = protocol_df.join(df_tx)
+        
+        
+        # Load Core Utility (context-specific)
+        
+        
+        utility_path = None
+        
+        if protocol in ['uniswap_v3', 'curve']:
+            # DEX: Volume
+            utility_path = self.raw_api_dir / f"volume_{protocol}.csv"
+            
+        elif protocol in ['aave_v3', 'compound_v3']:
+            # Lending: Active Loans / Total Borrowed
+            utility_path = self.raw_manual_dir / f"{protocol}_active_loans.csv"
+            
+        elif protocol == 'lido':
+            # Liquid Staking: Assets Staked
+            utility_path = self.raw_manual_dir / "lido_assets_staked.csv"
+            
+        elif protocol == 'makerdao':
+            # Stablecoin: Circulating Supply
+            utility_path = self.raw_manual_dir / "makerdao_circulating_supply.csv"
+        
+        if utility_path:
+            df_util = self.read_and_standardize(utility_path, 'core_utility')
+            if df_util is not None:
+                protocol_df = protocol_df.join(df_util)
+        else:
+            print(f"  No core_utility mapping defined for {protocol}")
+            protocol_df['core_utility'] = np.nan
+        
+        
+        # Missing value handling
+        
+        
+        # Forward fill
+        protocol_df = protocol_df.ffill()
+        
+        # Backward fill
+        protocol_df = protocol_df.bfill()
+        
+        # Fill remaining NaN with 0
+        protocol_df = protocol_df.fillna(0)
+        
+        # Add protocol identifier
+        protocol_df['protocol'] = protocol
+        
+        # Reset index to make date a column
+        protocol_df = protocol_df.reset_index()
+        
+        return protocol_df
+    
+    
+    def create_master_dataset(self):
+        """
+        Process all protocols and create master dataset.
+        
+        Returns
+        -------
+        pd.DataFrame
+            Merged dataset containing all protocols
+        """
+        print("Starting data cleaning pipeline...")
+        
+        all_data = []
+        
+        for protocol in self.protocols:
+            print(f"\nProcessing: {protocol.upper()}...")
+            protocol_df = self.load_protocol_data(protocol)
+            all_data.append(protocol_df)
+        
+        # Concatenate all protocols
+        master_df = pd.concat(all_data, ignore_index=True)
+        
+        # Reorder columns
+        cols = ['date', 'protocol', 'tvl', 'fees', 'revenue', 
+                'dau', 'tx_count', 'core_utility']
+        cols = [c for c in cols if c in master_df.columns]
+        master_df = master_df[cols]
+        
+        # Round core_utility to 3 decimal places
+        if 'core_utility' in master_df.columns:
+            master_df['core_utility'] = master_df['core_utility'].round(3)
+        
+        # Data quality check
+        print("\n=== Data Quality Summary ===")
+        print(f"Total rows: {len(master_df)}")
+        print(f"Date range: {master_df['date'].min()} → {master_df['date'].max()}")
+        print(f"\nMean values by protocol:")
+        print(master_df.groupby('protocol')[['tvl', 'revenue', 'core_utility']].mean())
+        
+        return master_df
 
-# ==========================================
-# 3. 主处理循环
-# ==========================================
 
-all_data = []
 
-print("开始处理数据...")
+# Standalone execution (for testing)
 
-for protocol in protocols:
-    print(f"\n正在处理协议: {protocol.upper()}...")
-    
-    # 创建一个空的DataFrame，索引为完整日期范围，确保时间对齐
-    protocol_df = pd.DataFrame(index=date_range)
-    protocol_df.index.name = 'Date'
-    
-    # -------------------------------------------------
-    # 3.1 读取通用 API 数据 (TVL, Fees, Revenue)
-    # -------------------------------------------------
-    # 注意：这里假设你的文件名格式为 {protocol}_{metric}.csv
-    # 如果你的文件名是 fees.csv 放在 aave 文件夹下，请修改路径为 f"{API_PATH}/{protocol}/fees.csv"
-    
-    # TVL
-    path_tvl = f"{API_PATH}/tvl_{protocol}.csv" # 请根据实际文件名修改
-    df_tvl = read_and_standardize(path_tvl, 'TVL')
-    protocol_df = protocol_df.join(df_tvl)
-    
-    # Fees
-    path_fees = f"{API_PATH}/fees_{protocol}.csv" 
-    df_fees = read_and_standardize(path_fees, 'Fees')
-    protocol_df = protocol_df.join(df_fees)
-    
-    # Revenue
-    path_rev = f"{API_PATH}/revenue_{protocol}.csv"
-    df_rev = read_and_standardize(path_rev, 'Revenue')
-    protocol_df = protocol_df.join(df_rev)
-    
-    # -------------------------------------------------
-    # 3.2 读取通用 Manual 数据 (DAU, Tx Count)
-    # -------------------------------------------------
-    
-    # DAU
-    path_dau = f"{MANUAL_PATH}/{protocol}_dau.csv"
-    df_dau = read_and_standardize(path_dau, 'DAU')
-    protocol_df = protocol_df.join(df_dau)
-    
-    # Tx Count
-    path_tx = f"{MANUAL_PATH}/{protocol}_tx_count.csv"
-    df_tx = read_and_standardize(path_tx, 'Tx_Count')
-    protocol_df = protocol_df.join(df_tx)
-    
-    # -------------------------------------------------
-    # 3.3 处理 Core Utility Metric (特殊映射)
-    # -------------------------------------------------
-    # 根据 Specification 中的 "Core Utility Metric" 逻辑进行映射
-    
-    utility_path = None
-    
-    if protocol in ['uniswap_v3', 'curve']:
-        # DEX: Volume (来自 API 文件夹)
-        utility_path = f"{API_PATH}/volume_{protocol}.csv"
-        
-    elif protocol in ['aave_v3', 'compound_v3']:
-        # Lending: Active Loans / Total Borrowed (来自 Manual 文件夹)
-        utility_path = f"{MANUAL_PATH}/{protocol}_active_loans.csv"
-        
-    elif protocol == 'lido':
-        # Liquid Staking: Assets Staked (来自 Manual 文件夹)
-        utility_path = f"{MANUAL_PATH}/lido_assets_staked.csv"
-        
-    elif protocol == 'makerdao':
-        # Stablecoin: Circulating Supply (来自 Manual 文件夹)
-        utility_path = f"{MANUAL_PATH}/makerdao_circulating_supply.csv"
-    
-    # 读取并合并 Core Utility
-    if utility_path:
-        df_util = read_and_standardize(utility_path, 'Core_Utility')
-        protocol_df = protocol_df.join(df_util)
-    else:
-        print(f"⚠️ 未找到 {protocol} 的 Core Utility 定义路径")
-        protocol_df['Core_Utility'] = np.nan
 
-    # -------------------------------------------------
-    # 3.4 缺失值处理 (Data Cleaning)
-    # -------------------------------------------------
+if __name__ == "__main__":
+    # Get project root
+    CURRENT_SCRIPT = Path(__file__).resolve()
+    PROJECT_ROOT = CURRENT_SCRIPT.parent.parent.parent
     
-    # 策略 1: Forward Fill (ffill) - 新语法
-    protocol_df = protocol_df.ffill()
+    cleaner = DataCleaner(
+        raw_api_dir=str(PROJECT_ROOT / 'data' / 'raw' / 'api'),
+        raw_manual_dir=str(PROJECT_ROOT / 'data' / 'raw' / 'manual'),
+        output_dir=str(PROJECT_ROOT / 'data' / 'processed')
+    )
     
-    # 策略 2: Backward Fill (bfill) - 新语法
-    protocol_df = protocol_df.bfill()
+    master_df = cleaner.create_master_dataset()
     
-    # 策略 3: 剩余缺失值处理
-    # 如果还有缺失 (通常是 Core Utility 在早期确实为0，或者数据源完全缺失)，填 0
-    protocol_df = protocol_df.fillna(0)
-    
-    # 添加协议名称列
-    protocol_df['Protocol'] = protocol
-    
-    # 重置索引，让 Date 变成一列
-    protocol_df = protocol_df.reset_index()
-    
-    # 添加到总列表
-    all_data.append(protocol_df)
-
-# ==========================================
-# 4. 合并与保存
-# ==========================================
-
-if all_data:
-    # 纵向合并所有协议数据
-    master_df = pd.concat(all_data, ignore_index=True)
-    
-    # 重新排列列顺序
-    cols = ['Date', 'Protocol', 'TVL', 'Fees', 'Revenue', 'DAU', 'Tx_Count', 'Core_Utility']
-    # 确保只包含存在的列
-    cols = [c for c in cols if c in master_df.columns]
-    master_df = master_df[cols]
-    
-    # 保留3位小数 (Core Utility)
-    if 'Core_Utility' in master_df.columns:
-        master_df['Core_Utility'] = master_df['Core_Utility'].round(3)
-        
-    # -------------------------------------------------
-    # 4.1 单位检查 (关键步骤)
-    # -------------------------------------------------
-    # 提醒：你需要检查数据是否为 Wei (10^18)。如果 TVL 看起来像 10^20+，则需要除以 1e18
-    # 这里我们打印概览供你检查
-    print("\n数据概览 (请检查数值大小是否符合 USD 单位):")
-    print(master_df.groupby('Protocol')[['TVL', 'Revenue', 'Core_Utility']].mean())
-    
-    # 保存结果
-    output_file = f"{OUTPUT_PATH}/master_dataset_clean.csv"
+    output_file = PROJECT_ROOT / 'data' / 'processed' / 'master_dataset_clean.csv'
     master_df.to_csv(output_file, index=False)
-    
-    print(f"\n成功! 清洗后的数据已保存至: {output_file}")
-    print(f"总行数: {len(master_df)}")
-    
-else:
-    print("未处理任何数据。")
+    print(f"\n Saved: {output_file}")

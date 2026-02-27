@@ -52,9 +52,4 @@ PROTOCOLS = {
 
 DUNE_QUERY_IDS = {
     "Aave V3": 1950309,
-    "Compound V3": 1950310,
-    "Uniswap V3": 1950311,
-    "Curve Finance": 1950312,
-    "MakerDAO": 1950313,
-    "Lido": 1950314,
 }

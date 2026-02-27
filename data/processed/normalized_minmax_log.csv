@@ -1,4 +1,4 @@
-Date,Protocol,TVL_score,Fees_score,Revenue_score,DAU_score,Tx_Count_score,Core_Utility_score,Capital_Turnover_score
+date,protocol,tvl_score,fees_score,revenue_score,dau_score,tx_count_score,core_utility_score,capital_turnover_score
 2025-02-26,aave_v3,76.26,89.03,92.1,59.12,47.7,84.97,1.2
 2025-02-27,aave_v3,75.46,84.85,90.69,58.5,46.62,84.95,1.22
 2025-02-28,aave_v3,75.22,88.01,91.75,59.62,48.41,84.87,1.21
