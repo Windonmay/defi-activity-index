@@ -13,8 +13,8 @@ CURRENT_SCRIPT = os.path.abspath(__file__)
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(CURRENT_SCRIPT)))
 
 # 设定时间范围 (根据你的Specification)
-start_date = '2025-02-27'
-end_date = '2026-02-27'
+start_date = '2025-02-26'
+end_date = '2026-02-26'
 date_range = pd.date_range(start=start_date, end=end_date, freq='D')
 
 # 定义数据路径
@@ -189,6 +189,10 @@ if all_data:
     cols = [c for c in cols if c in master_df.columns]
     master_df = master_df[cols]
     
+    # 保留3位小数 (Core Utility)
+    if 'Core_Utility' in master_df.columns:
+        master_df['Core_Utility'] = master_df['Core_Utility'].round(3)
+        
     # -------------------------------------------------
     # 4.1 单位检查 (关键步骤)
     # -------------------------------------------------
