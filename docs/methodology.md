@@ -29,9 +29,9 @@ Seven indicators are selected across the four dimensions:
 |-----------|-----------|------------|-------------|
 | D1: Capital | **TVL** | Total Value Locked in protocol contracts (USD) | DeFiLlama API |
 | D1: Capital | **Capital Turnover** | Core Utility ÷ TVL; measures capital utilization rate | Derived |
-| D2: User | **DAU** | Daily Active Users; unique addresses with meaningful interactions | Dune Analytics |
-| D2: User | **Tx Count** | Daily transaction count on protocol contracts | Dune Analytics |
-| D3: Operational | **Core Utility** | Context-specific throughput metric (see Section 2.3) | DeFiLlama / Dune |
+| D2: User | **DAU** | Daily Active Users; unique addresses with meaningful interactions | Tokenterminal |
+| D2: User | **Tx Count** | Daily transaction count on protocol contracts | Tokenterminal |
+| D3: Operational | **Core Utility** | Context-specific throughput metric (see Section 2.3) | DeFiLlama / Tokenterminal |
 | D4: Financial | **Fees** | Total fees paid by users (LP fees + protocol fees) | DeFiLlama API |
 | D4: Financial | **Revenue** | Protocol revenue accruing to treasury or token holders | DeFiLlama API |
 

@@ -49,7 +49,7 @@ python main.py
 ### Methodology
 ### Pipeline Stages
 
-Stage 1: Data Collection (DeFiLlama API + Dune Analytics)
+Stage 1: Data Collection (DeFiLlama API + Tokenterminal)
 <br>Stage 2: Data Cleaning & Feature Engineering
 <br>Stage 3: Normalization (Log + Min-Max)
 <br>Stage 4: Index Aggregation (Weighted Sum)
