@@ -12,7 +12,7 @@ Pipeline Stages:
     Stage 3: Normalization (Log-transformed + Min-Max/Z-Score)
     Stage 4: Index Construction (Optimized weighting scheme)
 
-Author: [Your Name]
+Author: Huang Guanren
 Date: 2026-02-26
 """
 
