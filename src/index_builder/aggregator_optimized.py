@@ -9,18 +9,16 @@ CURRENT_SCRIPT = os.path.abspath(__file__)
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(CURRENT_SCRIPT)))
 
 # 读取标准化后的主数据集 (Min-Max)
-INPUT_FILE = os.path.join(PROJECT_ROOT, 'data', 'processed', 'normalized_log.csv')
-OUTPUT_FILE = os.path.join(PROJECT_ROOT, 'data', 'final', 'final_index_log.csv')
+INPUT_FILE = os.path.join(PROJECT_ROOT, 'data', 'processed', 'normalized_minmax_log.csv')
+OUTPUT_FILE = os.path.join(PROJECT_ROOT, 'data', 'final', 'final_index_optimized.csv')
 
 # ==========================================
 # 2. 定义权重方案 (修正版：解决 Compound 0分问题)
 # ==========================================
 
 # 新的逻辑依据：
-# D3 (Operational): 专注于业务规模 (Volume/Loans)，反映“协议在干活”。
-# D4 (Financial): 综合 Fees (造血能力) 和 Revenue (留存能力)。
-# 这样即使 Compound 不留存 Revenue，只要 Fees 高，D4 就不会是 0 分。
-
+# D3 (Operational): 专注于业务规模 (Volume/Loans)。
+# D4 (Financial): 综合 Fees  和 Revenue。
 WEIGHTS = {
     # --- Dimension 1: Capital Efficiency (25%) ---
     'TVL_score':              0.125,

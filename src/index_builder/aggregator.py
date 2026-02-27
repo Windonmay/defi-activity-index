@@ -15,7 +15,7 @@ OUTPUT_FILE = os.path.join(PROJECT_ROOT, 'data', 'final', 'final_index.csv')
 # ==========================================
 # 2. 定义权重方案 (Weighting Scheme)
 # ==========================================
-# 你的框架有 4 个维度，总权重 1.0 (100%)
+# 有 4 个维度，总权重 1.0 (100%)
 # 每个维度内部均分权重
 
 WEIGHTS = {
@@ -29,7 +29,7 @@ WEIGHTS = {
 
     # --- Dimension 3: Economic Output (25%) ---
     'Core_Utility_score':     0.125,  # 25% / 2
-    'Fees_score':             0.125,  # 25% / 2 (注意你的列名是否为 Fees_score)
+    'Fees_score':             0.125,  # 25% / 2 
     
     # --- Dimension 4: Systemic Sustainability (25%) ---
     'Revenue_score':          0.25    # 25% / 1
