@@ -1,9 +1,104 @@
-| 维度 | 指标名称 | 指标描述 | 理论依据/文献 | 计算公式/数据逻辑 | 数据来源 | 单位 | 频率 | 协议适用性 | 备注 |
-|------|----------|------------------|---------------|------------------|----------------------|------|------|------------|------|
-| 1. Capital Efficiency & Quality | Total Value Locked (TVL) | 协议智能合约中当前锁定的资产总美元价值。 | 作为基础的“资本存量 (Capital Stock)”指标，虽有争议，但仍是衡量规模的基准 [6, 15]。Chiu et al. [8] 将其定义为生产过程中的输入 (Input)。 | TVL = Σ (Balance_i × Price_i)<br>即：所有抵押品或流动性池代币数量乘以当前市场价格的总和。 | DeFiLlama (protocol/{slug}) | USD | Daily | 通用 (Universal) | CSV路径：data/raw/api/tvl_*.csv |
-| 1. Capital Efficiency & Quality | Capital Turnover Ratio (资金周转率) | 衡量每一美元锁仓资金在单位时间内产生的业务吞吐量。反映资本的活跃程度和利用效率。 | Chiu et al. [8] 将 DeFi 视为生产网络，强调资本作为输入 (Input) 必须转化为产出 (Output)。低周转率意味着资本闲置（低效）。 | Turnover = Core Utility Metric / TVL<br><br>即：使用维度3中的“核心效用指标”（如交易量或借款额）除以当天的 TVL。 | 计算得出 (Derived) | Ratio (%) | Daily | 通用 (Universal) | 这是一个纯粹的“效率”指标。比单纯看 TVL 更能反映协议的真实活跃度。在 feature engineering 阶段计算 |
-| 2. User Activity & Engagement | Daily Active Users (DAU) | 每日产生有效交互的钱包地址数 | 协议活力与其使用广度内在相关。用户参与度是区别“僵尸协议”与活跃生态的关键 [11]。 | Count(Distinct Addresses)<br>统计在协议核心合约上发起交易的去重地址数 | TokenTerminal | Count | Daily | 通用 (Universal) | 排除 approve |
-| 2. User Activity & Engagement | Transaction Count (Tx Count) | 每日合约交易总笔数 | 补充 DAU 指标，反映用户交互的频次 (Frequency) 和强度。高频交互通常意味着更高的粘性。 | Count(Tx_Hash)<br>统计调用协议合约函数的成功交易总数 | TokenTerminal | Count | Daily | 通用 (Universal) | 与 DAU 结合分析更全面。 |
-| 3. Operational Output | Core Utility Metric (Throughput) | 反映协议核心业务功能的实际吞吐量或承载量。用于衡量协议的业务使用程度。 | 对应文献中的 GMV (Gross Merchandise Volume) 和生产网络产出 [3, 8]。真实交互流量比静态 TVL 更能反映协议活跃度。 | 分赛道定义逻辑：<br>• DEX: = 24h Volume (交易量)<br>• Lending: = Total Borrowed (总借款额)<br>• LSD: = Net Inflow (净流入) 或 TVL<br>• Stablecoin: = Circulating Supply (流通量) | DeFiLlama and TokenTerminal | USD | Daily | 特定映射 (Context-Specific) | 关键统一指标 |
-| 4. Financial Performance | Total Fees Paid | 用户为使用协议服务支付的总费用。 | 反映市场对协议服务的总付费意愿 (Willingness to Pay)。费用是检验协议是否创造真实经济价值的硬指标 [3]。 | Fees = Revenue (Protocol side) + Supply-side Revenue (LP side) | DeFiLlama (/summary/fees) | USD | Daily | 通用 (Universal) | 某些协议（如 Uniswap）主要产生 LP 费用，该指标能捕捉到这部分未进入国库但真实存在的经济价值。 |
-| 4. Financial Performance | Protocol Revenue | 归属于协议国库或代币持有者的净收入份额。 | 对应文献中的“财务可持续性”。高收入意味着协议具有造血能力，降低了依赖代币通胀激励的系统性风险 [9]。 | 赛道定义：DEX：协议抽成 <br>Lending：Reserve factor × Interest <br> Stablecoin：Stability Fee | DeFiLlama (/summary/revenue) | USD | Daily | 通用 (Universal) | 此指标作为“风险”维度的正向代理变量：收入越高，长期生存能力越强（风险越低）。 |
+# DeFi Activity Index: Data Dictionary
+
+## 1. Overview
+
+This document provides the complete specification for the multi-dimensional indicator framework underlying the Composite DeFi Activity Index. The framework is designed to capture five complementary dimensions of protocol vitality: Capital, Liquidity, User Activity, Operational Output, and Financial Performance. Each indicator is defined with its theoretical rationale, calculation logic, data source, and applicability scope.
+
+---
+
+## 2. Indicator Framework
+
+### 2.1 Dimension 1: Capital
+
+The Capital dimension measures the absolute scale of assets committed to a protocol. While Total Value Locked (TVL) has known limitations as a standalone vitality metric, it remains the foundational measure of input capital stock and provides essential context for understanding protocol size within the ecosystem.
+
+| Indicator | Description | Theoretical Rationale | Calculation Logic | Data Source | Unit | Frequency | Protocol Applicability | Notes |
+|:----------|:-------------|:----------------------|:-----------------|:-----------|:-----|:----------|:----------------------|:-----|
+| Total Value Locked (TVL) | The aggregate USD value of crypto assets currently locked in protocol smart contracts. | Serves as the baseline measure of input capital stock [6, 15]. Chiu et al. [8] define TVL as an input in the production process. | TVL = Σ(Balance_i × Price_i)<br>Sum of all collateral or liquidity pool token quantities multiplied by current market prices. | DeFiLlama (protocol/{slug}) | USD | Daily | Universal | CSV path: data/raw/api/tvl_*.csv |
+
+### 2.2 Dimension 2: Liquidity
+
+The Liquidity dimension captures the **utilization efficiency** of the protocol's available capital. In this study, liquidity is operationalized as the ratio of **Operational Output (Throughput)** to **Capital (TVL)**. This flow-to-stock ratio normalizes activity levels by the size of the capital base, reflecting how intensively capital is deployed relative to its available base.
+
+**Formula:** $Liquidity = Operational Output / TVL$
+
+| Indicator | Description | Theoretical Rationale | Calculation Logic | Data Source | Unit | Frequency | Protocol Applicability | Notes |
+|:----------|:-------------|:----------------------|:-----------------|:-----------|:-----|:----------|:----------------------|:-----|
+| Trading Liquidity Utilization | Measures how intensively available liquidity supports trading activity. | Higher volume relative to TVL indicates deeper and more actively used liquidity pools. | Trading Volume / TVL | Derived (DeFiLlama) | Ratio (%) | Daily | DEX (Uniswap V3, Curve) | Reflects capital efficiency in AMMs |
+| Borrow Utilization Ratio | Measures the proportion of deposited capital actively lent out. | Reflects credit market tightness. Higher utilization indicates efficient capital deployment [9]. | Total Borrowed / TVL | Derived (Token Terminal + DeFiLlama) | Ratio (%) | Daily | Lending (Aave V3, Compound V3) | High values may signal liquidity stress |
+| Capital Deployment Ratio | Measures the extent to which collateral is converted into circulating stablecoins. | Reflects the protocol’s ability to release liquidity into the broader ecosystem. | Circulating Supply / TVL | Derived (Token Terminal + DeFiLlama) | Ratio (%) | Daily | Stablecoin (MakerDAO / Sky) | Captures liquidity release efficiency |
+| Staking Liquidity Flow | Measures the net inflow of capital into staking relative to existing locked assets. | Captures the dynamic supply of liquidity entering the system over time. | Net Inflow / TVL | Derived (Token Terminal + DeFiLlama) | Ratio (%) | Daily | LSD (Lido) | Reflects liquidity velocity in staking |
+
+### 2.3 Dimension 3: User Activity
+
+The User Activity dimension captures behavioral engagement through on-chain interactions. This dimension is essential for distinguishing actively functioning protocols from "zombie" protocols.
+
+| Indicator | Description | Theoretical Rationale | Calculation Logic | Data Source | Unit | Frequency | Protocol Applicability | Notes |
+|:----------|:-------------|:----------------------|:-----------------|:-----------|:-----|:----------|:----------------------|:-----|
+| Daily Active Users (DAU) | Unique wallet addresses executing successful transactions on core contracts. | Protocol vitality is linked to active usage. Differentiates active ecosystems from "zombie" protocols [11]. | Count(Distinct Addresses) | TokenTerminal | Count | Daily | Universal | Excludes approval-only transactions |
+| Transaction Count | Total number of successful daily contract interactions. | Captures the intensity and frequency of user engagement. | Count(Tx_Hash) | TokenTerminal | Count | Daily | Universal | Indicator of user stickiness |
+
+### 2.4 Dimension 4: Operational Output
+
+The Operational Output dimension measures the real economic throughput generated by protocol operations, representing the actual services rendered (Gross Merchandise Volume).
+
+| Indicator | Description | Theoretical Rationale | Calculation Logic | Data Source | Unit | Frequency | Protocol Applicability | Notes |
+|:----------|:-------------|:----------------------|:-----------------|:-----------|:-----|:----------|:----------------------|:-----|
+| Core Utility Metric (Throughput) | Category-specific throughput proxy reflecting the primary business function. | Flow-based metrics (GMV) possess superior predictive power for valuation compared to static capital [3]. | Category-specific mapping:<br>• DEX: 24h Trading Volume<br>• Lending: Total Borrowed<br>• LSD: **Net Inflow**<br>• Stablecoin: Circulating Supply | DeFiLlama and TokenTerminal | USD | Daily | Context-Specific | Use Net Inflow for LSD to avoid TVL redundancy |
+
+### 2.5 Dimension 5: Financial Performance
+
+The Financial Performance dimension captures the revenue-generating capability and financial sustainability of protocols.
+
+| Indicator | Description | Theoretical Rationale | Calculation Logic | Data Source | Unit | Frequency | Protocol Applicability | Notes |
+|:----------|:-------------|:----------------------|:-----------------|:-----------|:-----|:----------|:----------------------|:-----|
+| Total Fees Paid | Total USD value paid by users for accessing services. | Direct proxy for market demand and users' willingness to pay [3]. | Protocol Revenue + Supply-side Revenue | DeFiLlama | USD | Daily | Universal | Includes LP fees in DEXs |
+| Protocol Revenue | Net income accrued to the protocol treasury or token holders. | Evaluates financial sustainability and survival without inflationary emissions [9]. | Category-specific net income | DeFiLlama | USD | Daily | Universal | Positive proxy for long-term viability |
+
+---
+
+## 3. Protocol-Specific Indicator Mapping
+
+| Protocol | Sector | Capital (TVL) | Liquidity Indicator | User Activity | Operational Output | Financial Performance |
+|:---------|:-------|:-------------:|:-------------------|:--------------|:-------------------|:---------------------|
+| Aave V3 | Lending | ✓ | **Borrow Utilization** | DAU, Tx Count | Total Borrowed | Fees, Revenue |
+| Compound V3 | Lending | ✓ | **Borrow Utilization** | DAU, Tx Count | Total Borrowed | Fees, Revenue |
+| Uniswap V3 | DEX | ✓ | **Trading Utilization** | DAU, Tx Count | Trading Volume | Fees, Revenue |
+| Curve Finance | DEX | ✓ | **Trading Utilization** | DAU, Tx Count | Trading Volume | Fees, Revenue |
+| MakerDAO (Sky) | Stablecoin | ✓ | **Capital Deployment** | DAU, Tx Count | Circulating Supply | Fees, Revenue |
+| Lido | LSD | ✓ | **Staking Flow Ratio** | DAU, Tx Count | **Net Inflow** | Fees, Revenue |
+
+---
+
+## 4. Data Sources Summary
+
+| Source | Coverage | Primary Metrics |
+|:-------|:---------|:----------------|
+| DeFiLlama | TVL, Volume, Fees, Revenue | Cross-protocol, cross-chain aggregates |
+| TokenTerminal | DAU, Transaction Count, Active Loans, Circulating Supply | Specialized metrics and user behavior |
+
+---
+
+## 5. Dimension Weighting Scheme
+
+The Composite DeFi Activity Index is constructed using an **equal-weighting approach** (20% per dimension):
+
+| Dimension | Weight | Rationale |
+|:----------|:------:|:----------|
+| Capital | 20% | Baseline scale measure |
+| Liquidity | 20% | Capital utilization efficiency |
+| User Activity | 20% | Behavioral engagement |
+| Operational Output | 20% | Economic throughput (GMV) |
+| Financial Performance | 20% | Revenue and sustainability |
+
+---
+
+## 6. Version History
+
+| Version | Date | Changes |
+|:--------|:-----|:--------|
+| 1.0 | 2026-02-26 | Initial framework with 4 dimensions |
+| 2.0 | 2026-03-17 | Updated to 5 dimensions; Defined Liquidity as Throughput/TVL ratio. |
+| 2.1 | 2026-04-02 | Unified Liquidity dimension: All indicators = Operational Output / TVL; Updated Lido Liquidity to Staking Flow (Net Inflow / TVL); Updated Lido Core Utility to Net Inflow. Net Inflow is derived from diff(assets_staked). |
+
+---
