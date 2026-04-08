@@ -1,0 +1,27 @@
+{
+  "global_correlation": {
+    "pearson_dai": 0.5386164074399212,
+    "pearson_dai_p": 1.810042731585943e-165,
+    "spearman_dai": 0.396624513833117,
+    "spearman_dai_p": 1.2271349030018492e-83,
+    "pearson_tvl": 0.28308869110409884,
+    "pearson_tvl_p": 9.555678910746752e-42,
+    "spearman_tvl": 0.42125190217002867,
+    "spearman_tvl_p": 3.4437823676446714e-95,
+    "pearson_advantage": 0.2555277163358224,
+    "spearman_advantage": -0.024627388336911693
+  },
+  "n_observations": 2196,
+  "protocols": [
+    "aave_v3",
+    "compound_v3",
+    "curve",
+    "lido",
+    "makerdao",
+    "uniswap_v3"
+  ],
+  "date_range": [
+    "2025-02-26",
+    "2026-02-26"
+  ]
+}

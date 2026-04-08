@@ -1,6 +1,7 @@
 # 核心数据处理
 pandas==2.2.3
 numpy==2.1.2
+scipy==1.17.1
 
 # HTTP 请求与 API 交互
 requests==2.32.5

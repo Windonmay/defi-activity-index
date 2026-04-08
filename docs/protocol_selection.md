@@ -1,17 +1,17 @@
-# 协议选择标准与清单
+# Protocol Selection Criteria and Roster
 
-## 1. 选择标准
-1.  **类型覆盖**：确保指数能反映DeFi生态主要活动类别。至少涵盖借贷、去中心化交易所、稳定币、流动性质押四大核心赛道。
-2.  **数据可得性**：协议的主要指标（如TVL、交易量、费用、收入等）必须在主流数据平台（如Tokenterminal、DeFiLlama）上存在公开、可验证且持续更新的数据看板或易于查询的数据集。
-3.  **市场代表性**：协议在其所属赛道及整个DeFi生态中应具备显著影响力与代表性。主要参考DefiLlama的TVL排名，优先选取各细分赛道长期位居前列的头部协议。
-4.  **研究时间范围**：协议在研究设定的完整时间窗口（2025年2月26日至2026年2月26日）内，应保持持续运营且关键数据指标可获取，避免因协议上线时间晚或中途关闭导致的数据缺失，保障时间序列分析的完整性。
+## 1. Selection Criteria
+1. **Sector Coverage**: Ensure the index reflects major DeFi activities by including at least four core sectors: Lending, Decentralized Exchanges (DEXs), Stablecoins, and Liquid Staking Derivatives (LSDs).
+2. **Data Availability**: Key protocol metrics (e.g., TVL, volume, fees, revenue) must have public, verifiable, and continuously updated dashboards or easily queryable datasets on mainstream platforms like Token Terminal and DeFiLlama.
+3. **Market Representativeness**: Protocols must demonstrate significant influence and representativeness within their sectors and the broader DeFi ecosystem. Selection prioritizes top-tier protocols consistently ranking high in DeFiLlama TVL within their respective categories.
+4. **Observation Window**: Protocols must have operated continuously with accessible key metrics throughout the defined research period (February 26, 2025 – February 26, 2026). This ensures complete time-series data and avoids missing values from late launches or protocol closures.
 
-## 2. 最终协议列表
-| 协议名称 | 类型 | 入选理由 | 主要数据来源平台 |
+## 2. Final Protocol Sample
+| Protocol Name | Sector | Justification for Selection | Primary Data Sources |
 | :--- | :--- | :--- | :--- |
-| Aave V3 | 借贷 | 多链部署的借贷市场绝对龙头，TVL长期稳居借贷赛道第一，社区数据看板丰富、成熟，经济活动模型清晰。 | DeFiLlama & Tokenterminal |
-| Compound V3 | 借贷 | 开创性的借贷协议，具有独特的风险管理模型，TVL在借贷赛道名列前茅，提供与Aave有差异的对比维度，数据可得性好。 | DeFiLlama & Tokenterminal |
-| Uniswap V3 | 去中心化交易所 | 交易量最大的去中心化交易所，主导现货交易市场，流动性深度与费用数据模型成熟。 | DeFiLlama & Tokenterminal |
-| Curve Finance | 去中心化交易所 | 稳定币与锚定资产互换的基石协议，TVL巨大。 | DeFiLlama & Tokenterminal |
-| MakerDAO | 稳定币 | 最早的DeFi协议之一，以DAI稳定币为核心，收入模式（稳定费）清晰且持续，是DeFi原生稳定币和协议收入的典范。现在更名为Sky。 | DeFiLlama & Tokenterminal |
-| Lido | 流动性质押 | 以太坊流动性质押赛道的绝对主导者（>70%市场份额），代表快速增长的LSDeFi领域，其质押衍生品（stETH）被广泛使用，收入数据明确。 | DeFiLlama & Tokenterminal |
+| Aave V3 | Lending | The undisputed market leader in multi-chain lending, consistently ranking first in TVL. It features a mature economic model and highly transparent on-chain data dashboards. | DeFiLlama & Token Terminal |
+| Compound V3 | Lending | A foundational lending protocol with a distinct risk-management model. It ranks high in TVL and provides a comparative baseline against Aave, with strong data availability. | DeFiLlama & Token Terminal |
+| Uniswap V3 | DEX | The largest DEX by volume, dominating the spot trading market. It possesses mature models for liquidity depth and fee generation. | DeFiLlama & Token Terminal |
+| Curve Finance | DEX | The cornerstone protocol for stablecoin and pegged-asset swaps, managing massive capital pools. | DeFiLlama & Token Terminal |
+| MakerDAO | Stablecoin | A pioneer DeFi protocol centered on the DAI stablecoin. Its clear and consistent revenue model (stability fees) serves as an exemplar for native stablecoins and protocol revenue. (Now rebranded as Sky). | DeFiLlama & Token Terminal |
+| Lido | Liquid Staking | The absolute dominant player in Ethereum liquid staking (>70% market share), representing the rapidly growing LSDeFi sector. Its derivative token (stETH) is widely adopted, and revenue data is explicit. | DeFiLlama & Token Terminal |
