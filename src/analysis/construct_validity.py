@@ -12,12 +12,10 @@ from pathlib import Path
 
 warnings.filterwarnings('ignore')
 
-
 def get_project_root():
     """Get project root directory."""
     current_file = Path(__file__).resolve()
     return current_file.parent.parent.parent
-
 
 def load_final_index(project_root):
     """Load the final composite index data."""
@@ -33,7 +31,6 @@ def load_final_index(project_root):
     print(f"    Date range: {df['date'].min()} to {df['date'].max()}")
 
     return df
-
 
 def load_market_cap_data(project_root):
     """Load and merge market cap data for all protocols."""
