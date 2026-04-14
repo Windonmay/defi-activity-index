@@ -325,20 +325,8 @@ class FeatureEngineer:
 
 
     def validate_logic(self, df):
-        """
-        Sanity check: Verify protocol-specific liquidity metrics.
-
-        Expected patterns:
-        - DEX trading utilization should be higher than lending borrow utilization
-        - Stablecoin capital deployment should be close to 1.0 (full deployment)
-        - LSD staking flow should be relatively small (daily net flows vs TVL)
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Must contain 'protocol' and liquidity columns
-        """
-        print("\n=== Logic Validation: Protocol Liquidity Comparison ===")
+        """Sanity check: Verify protocol-specific liquidity metrics."""
+        print("\nLogic Validation: Protocol Liquidity Comparison")
 
         # Check Trading Liquidity Utilization for DEX
         dex_protocols = ['uniswap_v3', 'curve']
@@ -370,7 +358,7 @@ class FeatureEngineer:
                 print(f"  Mean: {lido_data['staking_flow'].mean():.4f}")
                 print(f"  Std:  {lido_data['staking_flow'].std():.4f}")
 
-        print("\n✓ Logic validation complete")
+        print("\nLogic validation complete")
 
 
     def add_features(self, df):

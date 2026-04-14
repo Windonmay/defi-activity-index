@@ -224,7 +224,7 @@ class OptimizedNormalizer:
                 output_df[f"{metric}_score"] = self.normalize_zscore(output_df, working_col)
 
         # Summary statistics
-        print("\n=== Normalization Summary ===")
+        print("\nNormalization Summary:")
         score_cols = [c for c in output_df.columns if c.endswith('_score')]
         print(f"Generated {len(score_cols)} score columns")
 

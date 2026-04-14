@@ -125,9 +125,7 @@ def run_granger_for_protocol(proto_df, protocol_name, max_lag=7):
 
 def run_all_granger_tests(stationary_df, max_lag=7):
     """Iterate through all protocols and run tests."""
-    print("\n" + "-" * 60)
-    print(f"Granger Causality Analysis (Max Lag = {max_lag} days)")
-    print("-" * 60)
+    print(f"\nGranger Causality Analysis (Max Lag = {max_lag} days)")
     
     all_results = []
     summary_data = []
@@ -158,19 +156,18 @@ def run_all_granger_tests(stationary_df, max_lag=7):
             })
 
     summary_df = pd.DataFrame(summary_data)
-    
+
     # Print clean summary table
     print(f"\n{'Protocol':<15} | {'DAI -> MCAP (p-val)':<20} | {'TVL -> MCAP (p-val)':<20}")
-    print("-" * 65)
+    print(f"{'-' * 65}")
     for _, row in summary_df.iterrows():
         sig_dai = "***" if row['DAI_Significant'] else ""
         sig_tvl = "***" if row['TVL_Significant'] else ""
-        
+
         dai_str = f"{row['DAI_best_p']:.4f} (L{row['DAI_best_lag']}){sig_dai}"
         tvl_str = f"{row['TVL_best_p']:.4f} (L{row['TVL_best_lag']}){sig_tvl}"
-        
+
         print(f"{row['protocol']:<15} | {dai_str:<20} | {tvl_str:<20}")
-    print("-" * 65)
     print("Note: *** indicates statistical significance (p < 0.05)")
 
     return all_results, summary_df
@@ -197,10 +194,8 @@ def save_granger_results(all_results, summary_df, project_root):
 def run_analysis():
     """Main execution pipeline."""
     project_root = get_project_root()
-    
-    print("=" * 65)
-    print("Predictive Power Analysis (Granger Causality)")
-    print("=" * 65)
+
+    print("\nPredictive Power Analysis (Granger Causality)")
     
     # 1. Load Data
     df = load_merged_data(project_root)
@@ -214,17 +209,14 @@ def run_analysis():
     
     # 4. Save Results
     save_granger_results(all_results, summary_df, project_root)
-    
+
     # 5. Conclusion Printout
-    print("\n" + "=" * 65)
-    print("Predictive Power Conclusion")
-    print("=" * 65)
-    
     dai_wins = sum(summary_df['DAI_Significant'])
     tvl_wins = sum(summary_df['TVL_Significant'])
-    
-    print(f"Protocols where DAI significantly predicts MCAP: {dai_wins} / {len(summary_df)}")
-    print(f"Protocols where TVL significantly predicts MCAP: {tvl_wins} / {len(summary_df)}")
+
+    print(f"\nPredictive Power Summary:")
+    print(f"  DAI predicts MCAP: {dai_wins} / {len(summary_df)} protocols")
+    print(f"  TVL predicts MCAP: {tvl_wins} / {len(summary_df)} protocols")
 
 
 if __name__ == "__main__":

@@ -1,10 +1,6 @@
 """
 Event Study & Cross-Sectional Stability Analysis
-=================================================
-Visualizes the responsiveness of the DAI composite index vs. TVL
-during major market events. Uses Fundamental weights [5%, 15%, 45%, 5%, 30%].
-
-Recommended protocols for paper: Lido (best interpretability) + Aave V3 (strongest Granger)
+Visualizes the responsiveness of the DAI composite index vs. TVL in Fundamental weights [5%, 15%, 45%, 5%, 30%].
 """
 
 import pandas as pd
@@ -193,10 +189,7 @@ def plot_event_study(df, protocol, events, output_dir):
 
 
 def run_event_study():
-    print("=" * 70)
-    print("Event Study Generator — Lido + Aave V3")
-    print("Weights: Fundamental [5%, 15%, 45%, 5%, 30%]")
-    print("=" * 70)
+    print("\nEvent Study Generator")
 
     project_root = get_project_root()
     df = load_and_prep_data(project_root)
@@ -214,27 +207,10 @@ def run_event_study():
             print(f"  [WARN] Protocol '{protocol}' not found in data.")
 
     # Summary
-    print("\n" + "=" * 70)
-    print("SUMMARY")
-    print("=" * 70)
-    print(f"\n{'Protocol':<15} | {'DAI r':<10} | {'TVL r':<10} | {'DAI Advantage':<15}")
-    print("-" * 55)
+    print("\nEvent Study Summary:")
+    print(f"{'Protocol':<15} | {'DAI r':<10} | {'TVL r':<10} | {'DAI Advantage':<15}")
     for r in results:
         print(f"{r['protocol']:<15} | {r['corr_dai']:>+.3f}      | {r['corr_tvl']:>+.3f}      | {r['dai_advantage']:>+.3f}")
-
-    print("\n" + "=" * 70)
-    print("KEY INSIGHTS FOR PAPER:")
-    print("=" * 70)
-    print("""
-1. LIDO: DAI (r=+0.646) significantly outperforms TVL (r=+0.453)
-   - DAI provides cleaner signal, lower volatility
-   - TVL lags behind market events
-
-2. AAVE V3: DAI (r=+0.370) vs TVL (r=+0.414) - nearly equal
-   - However, Granger causality strongest for Aave (p=0.0005)
-   - Suggests DAI has better PREDICTIVE power despite similar correlation
-""")
-    print("=" * 70)
 
 
 if __name__ == "__main__":

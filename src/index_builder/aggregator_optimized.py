@@ -156,11 +156,11 @@ class OptimizedIndexAggregator:
         df = df[cols]
 
         # Preview
-        print("\n=== Index Preview (First 5 rows) ===")
+        print("\nIndex Preview (First 5 rows):")
         preview_cols = ['date', 'protocol', 'composite_index'] + list(self.dimensions.keys())
         print(df[preview_cols].head())
 
-        print("\n=== Latest Ranking ===")
+        print("\nLatest Ranking:")
         latest_date = df['date'].max()
         top_protocols = df[df['date'] == latest_date].sort_values(
             'composite_index', ascending=False
@@ -169,7 +169,7 @@ class OptimizedIndexAggregator:
         print(top_protocols[['protocol', 'composite_index']].head(10).to_string(index=False))
 
         # Dimension breakdown for top protocols
-        print("\n=== Dimension Breakdown (Latest) ===")
+        print("\nDimension Breakdown (Latest):")
         dim_cols = ['protocol'] + list(self.dimensions.keys())
         print(top_protocols[dim_cols].head(10).to_string(index=False))
 
@@ -177,23 +177,8 @@ class OptimizedIndexAggregator:
 
 
     def compute_correlation_analysis(self, df):
-        """
-        Verify that dimensions are not highly correlated.
-
-        This validates that the 5-dimension separation avoids
-        mathematical correlation issues.
-
-        Parameters
-        ----------
-        df : pd.DataFrame
-            Normalized data with dimension scores
-
-        Returns
-        -------
-        pd.DataFrame
-            Correlation matrix
-        """
-        print("\n=== Dimension Correlation Analysis ===")
+        """Verify that dimensions are not highly correlated."""
+        print("\nDimension Correlation Analysis:")
         print("Checking for mathematical correlation (should be < 0.7)...")
 
         dim_cols = list(self.dimensions.keys())
@@ -213,9 +198,9 @@ class OptimizedIndexAggregator:
         if high_corr_pairs:
             print("\nWARNING: High correlation detected:")
             for pair in high_corr_pairs:
-                print(f"   {pair[0]} ↔ {pair[1]}: {pair[2]:.3f}")
+                print(f"   {pair[0]} <-> {pair[1]}: {pair[2]:.3f}")
         else:
-            print("\n✓ No high correlations detected (all < 0.7)")
+            print("\nNo high correlations detected (all < 0.7)")
 
         return corr_matrix
 

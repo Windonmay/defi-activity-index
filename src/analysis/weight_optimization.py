@@ -1,6 +1,5 @@
 """
 Sensitivity Analysis & Weight Optimization
-===========================================
 Tests different weighting schemes (Equal, Fundamental, PCA) for the DAI composite index 
 to maximize its construct validity and predictive power (Granger Causality).
 """
@@ -102,9 +101,7 @@ def generate_new_indices(df, pca_weights):
 
 def evaluate_construct_validity(df):
     """Evaluate Pearson & Spearman correlation for all 3 schemes."""
-    print("\n" + "-" * 60)
-    print("Phase 1: Construct Validity (Correlation with Market Cap)")
-    print("-" * 60)
+    print("\nPhase 1: Construct Validity (Correlation with Market Cap)")
     
     schemes = ['dai_equal', 'dai_fund', 'dai_pca', 'tvl_score']
     results = []
@@ -122,6 +119,7 @@ def evaluate_construct_validity(df):
         
     res_df = pd.DataFrame(results).set_index('Scheme')
     print(res_df.round(4).to_string())
+
     return res_df
 
 
@@ -136,9 +134,7 @@ def make_stationary(series):
 
 def evaluate_predictive_power(df, max_lag=7):
     """Run Granger causality for all schemes and count significant predictions."""
-    print("\n" + "-" * 60)
-    print(f"Phase 2: Predictive Power (Granger Causality, Max Lag={max_lag})")
-    print("-" * 60)
+    print(f"\nPhase 2: Predictive Power (Granger Causality, Max Lag={max_lag})")
     
     schemes = ['dai_equal', 'dai_fund', 'dai_pca', 'tvl_score']
     
@@ -173,11 +169,10 @@ def evaluate_predictive_power(df, max_lag=7):
                 
     # Print results summary
     print(f"{'Weighting Scheme':<20} | {'Protocols Predicted (p < 0.05)':<30}")
-    print("-" * 55)
+    print(f"{'-' * 55}")
     for scheme, count in success_counts.items():
         total = len(df['protocol'].unique())
         print(f"{scheme.upper():<20} | {count} / {total}")
-    print("-" * 55)
     
     return success_counts
 
@@ -185,10 +180,8 @@ def evaluate_predictive_power(df, max_lag=7):
 def run_optimization():
     """Main execution pipeline."""
     project_root = get_project_root()
-    
-    print("=" * 65)
-    print("Weight Optimization & Sensitivity Analysis")
-    print("=" * 65)
+
+    print("\nWeight Optimization & Sensitivity Analysis")
     
     # 1. Load data
     df = load_data(project_root)
@@ -207,7 +200,7 @@ def run_optimization():
     
     # 6. Final Conclusion
     best_scheme = max(success_counts, key=success_counts.get)
-    print(f"-> The strongest predictive model is: {best_scheme.upper()}")
+    print(f"\nThe strongest predictive model is: {best_scheme.upper()}")
 
 
 if __name__ == "__main__":

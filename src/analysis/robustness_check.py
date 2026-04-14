@@ -1,14 +1,6 @@
 """
 Robustness Check: Z-Score vs Min-Max Normalization
-==================================================
-Task 3: Verify that results are not due to "lucky parameter selection"
-
-This script:
-1. Loads Z-score normalized data
-2. Reconstructs composite index using Fundamental weights
-3. Runs Granger causality tests
-4. Compares results with Min-Max baseline
-5. Generates robustness report
+Verifies that results are not due to lucky parameter selection.
 """
 
 import pandas as pd
@@ -114,9 +106,7 @@ def run_granger_tests(df, index_col, max_lag=7):
 
 
 def main():
-    print("=" * 70)
-    print("ROBUSTNESS CHECK: Z-Score vs Min-Max Normalization")
-    print("=" * 70)
+    print("\nRobustness Check: Z-Score vs Min-Max Normalization")
 
     project_root = get_project_root()
 
@@ -144,9 +134,8 @@ def main():
     # Merge results
     comparison = granger_mm.merge(granger_zs, on='protocol', suffixes=('_MM', '_ZS'))
 
-    print("-" * 70)
-    print(f"{'Protocol':<15} | {'Min-Max':<20} | {'Z-Score':<20} | {'Consistent?'}")
-    print("-" * 70)
+    print(f"\n{'Protocol':<15} | {'Min-Max':<20} | {'Z-Score':<20} | {'Consistent?'}")
+    print(f"{'-' * 70}")
 
     consistent = 0
     for _, row in comparison.iterrows():
@@ -157,52 +146,24 @@ def main():
         is_consistent = row['significant_MM'] == row['significant_ZS']
         consistent += is_consistent
 
-        status = "✅" if is_consistent else "⚠️"
+        status = "[OK]" if is_consistent else "[!]"
         print(f"{row['protocol']:<15} | {mm_sig:<20} | {zs_sig:<20} | {status}")
-
-    print("-" * 70)
 
     # Summary
     print("\n[3] Robustness Summary")
-    print("=" * 70)
 
     sig_mm = granger_mm['significant'].sum()
     sig_zs = granger_zs['significant'].sum()
 
-    print(f"\nMin-Max Results:   {sig_mm} / {len(granger_mm)} protocols significant")
+    print(f"Min-Max Results:   {sig_mm} / {len(granger_mm)} protocols significant")
     print(f"Z-Score Results:  {sig_zs} / {len(granger_zs)} protocols significant")
     print(f"Consistency:      {consistent} / {len(comparison)} protocols")
-
-    # Key conclusion
-    print("\n" + "=" * 70)
-    print("CONCLUSION")
-    print("=" * 70)
-
-    if consistent == len(comparison):
-        print("""
-✅ ROBUSTNESS CONFIRMED
-
-The results are NOT due to lucky parameter selection:
-- Min-Max and Z-Score produce CONSISTENT conclusions
-- The DAI index's predictive power is robust to normalization method
-
-This strengthens the validity of the Composite DeFi Activity Index.
-""")
-    else:
-        print("""
-⚠️ MIXED RESULTS - REQUIRES DISCUSSION
-
-Some protocols show different significance across methods:
-- This is expected for individual protocols
-- Focus on overall pattern consistency
-""")
 
     # Save detailed results
     output_dir = project_root / 'data' / 'analysis'
     comparison.to_csv(output_dir / 'robustness_check_results.csv', index=False)
 
     print(f"\nResults saved to: {output_dir / 'robustness_check_results.csv'}")
-    print("=" * 70)
 
     return comparison
 

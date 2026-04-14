@@ -276,7 +276,7 @@ class DataCleaner:
             master_df['core_utility'] = master_df['core_utility'].round(3)
 
         # Data quality check
-        print("\n=== Data Quality Summary ===")
+        print("\nData Quality Summary:")
         print(f"Total rows: {len(master_df)}")
         print(f"Date range: {master_df['date'].min()} → {master_df['date'].max()}")
         print(f"\nMean values by protocol:")
