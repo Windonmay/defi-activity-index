@@ -37,7 +37,6 @@ Pipeline Stages:
     Stage 4: Index Construction (5-dimension optimized weighting)
 
 Version: 2.1 (2026-04-02)
-Author: [Your Name]
 """
 
 import sys
@@ -58,27 +57,15 @@ if str(project_root) not in sys.path:
 
 
 # MODULE IMPORTS
-print("=" * 70)
-print("INITIALIZING MODULES")
-print("=" * 70)
+print("Initializing modules...")
 
 try:
     from src.data_loader.defillama import DeFiLlamaLoader
-    print("  DeFiLlamaLoader Ready")
-
     from src.data_processor.cleaner import DataCleaner
-    print("  DataCleaner Ready")
-
     from src.data_processor.feature_engineer import FeatureEngineer
-    print("  FeatureEngineer Ready")
-
     from src.index_builder.normalizer_optimized import OptimizedNormalizer
-    print("  OptimizedNormalizer Ready")
-
     from src.index_builder.aggregator_optimized import OptimizedIndexAggregator
-    print("  OptimizedIndexAggregator Ready")
-
-    print("\n  All modules imported successfully\n")
+    print("All modules imported successfully")
 
 except ImportError as e:
     print(f"\nImportError: {e}")
@@ -112,69 +99,14 @@ PROTOCOLS = ['aave_v3', 'compound_v3', 'uniswap_v3', 'curve', 'makerdao', 'lido'
 
 # 5-Dimension Weighting Scheme Documentation (v2.1)
 WEIGHTING_SCHEME = """
-5-Dimension Equal-Weight DeFi Activity Index (v2.1)
-=====================================================
+5-Dimension Equal-Weight Framework (20% each):
+  D1: Capital Scale (TVL)
+  D2: Liquidity (Operational Output / TVL) - protocol-specific indicators
+  D3: User Activity (DAU + Tx Count)
+  D4: Operational Output (Core Utility) - protocol-specific mapping
+  D5: Financial Performance (Fees + Revenue)
 
-The composite index is constructed using equal weights across five dimensions (20% each).
-This approach ensures structural neutrality and avoids mathematical correlation issues.
-
-Dimension 1: Capital Scale (20%)
----------------------------------
-  - TVL: 20%
-  - Rationale: Baseline scale measure, captures absolute capital size
-
-Dimension 2: Liquidity (20%)
------------------------------
-  - Unified Formula: Liquidity = Operational Output / TVL
-  - Protocol-Specific Indicators:
-    * Lending (Aave, Compound): Borrow Utilization Ratio = Total Borrowed / TVL
-    * DEX (Uniswap, Curve): Trading Liquidity Utilization = Trading Volume / TVL
-    * Stablecoin (MakerDAO): Capital Deployment Ratio = Circulating Supply / TVL
-    * LSD (Lido): Staking Liquidity Flow = Net Inflow / TVL
-  - Rationale: Capital utilization efficiency (flow/stock ratio)
-  - CRITICAL: Separated from Capital to avoid Liquidity=Throughput/TVL correlation
-
-Dimension 3: User Activity (20%)
----------------------------------
-  - Daily Active Users (DAU): 10%
-  - Transaction Count (Tx Count): 10%
-
-Dimension 4: Operational Output (20%)
--------------------------------------
-  - Core Utility Metric: 20%
-  - Protocol-Specific Mapping:
-    * DEX: Trading Volume
-    * Lending: Total Borrowed (Active Loans)
-    * LSD: Net Inflow
-    * Stablecoin: Circulating Supply
-
-Dimension 5: Financial Performance (20%)
-----------------------------------------
-  - Total Fees: 10%
-  - Protocol Revenue: 10%
-
-Total Weight = 100%
-
-Why Separate Liquidity from Capital?
-------------------------------------
-Problem: Liquidity = Operational Output / TVL
-
-If Liquidity and TVL are in the same dimension:
-  - When TVL increases: TVL Score increases, but Liquidity Score decreases
-    (assuming constant Operational Output)
-  - This creates mathematical negative correlation
-  - Result: Signal cancellation in weighted average
-
-Solution: Separate into independent dimensions
-  - D1 Capital: TVL only (scale)
-  - D2 Liquidity: Operational Output / TVL (efficiency)
-  - Each dimension weighted at 20%
-
-Version History:
-----------------
-  - v1.0 (2026-02-26): Initial framework with 4 dimensions
-  - v2.0 (2026-03-17): Updated to 5 dimensions; Defined Liquidity as Throughput/TVL
-  - v2.1 (2026-04-02): Unified Liquidity = Operational Output / TVL for all protocols
+Note: D2 separated from D1 to avoid mathematical correlation
 """
 
 
@@ -182,9 +114,7 @@ Version History:
 
 def print_stage_header(stage_num: int, stage_name: str) -> None:
     """Print formatted stage header."""
-    print("\n" + "=" * 70)
-    print(f"STAGE {stage_num}: {stage_name}")
-    print("=" * 70)
+    print(f"\n--- Stage {stage_num}: {stage_name} ---")
 
 
 def print_substep(step: str, total: int, description: str) -> None:
@@ -576,9 +506,7 @@ def stage_4_index_construction() -> None:
 
 def print_pipeline_summary() -> None:
     """Print comprehensive summary of pipeline execution."""
-    print("\n" + "=" * 70)
-    print("PIPELINE EXECUTION SUMMARY")
-    print("=" * 70)
+    print("\n--- Pipeline Execution Summary ---")
 
     # Output Files
     print("\n  Generated Files:")
@@ -629,10 +557,7 @@ def print_pipeline_summary() -> None:
     print("    D4: Operational Output (20%)")
     print("    D5: Financial Performance (20%)")
 
-    # Timestamp
-    print("\n" + "=" * 70)
-    print(f"Pipeline completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-    print("=" * 70)
+    print(f"\nPipeline completed at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 
 
 
@@ -664,10 +589,8 @@ def main():
 
 
     # PIPELINE EXECUTION
-    print("\n" + "=" * 70)
-    print("       DeFi ACTIVITY INDEX - CONSTRUCTION PIPELINE")
-    print("                  5-Dimension Framework")
-    print("=" * 70)
+    print("\nDeFi Activity Index - Construction Pipeline")
+    print("5-Dimension Framework")
     print(f"\nProject root:  {project_root}")
     print(f"Start time:   {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"Date range:   {START_DATE} to {END_DATE}")
@@ -687,12 +610,8 @@ def main():
         # Stage 4: Index Construction
         stage_4_index_construction()
 
-        # Print final summary
         print_pipeline_summary()
-
-        print("\n" + "=" * 70)
-        print("   ALL STAGES COMPLETED SUCCESSFULLY")
-        print("=" * 70 + "\n")
+        print("\nAll stages completed successfully\n")
 
         return 0  # Success exit code
 
@@ -702,21 +621,17 @@ def main():
         return 130  # Standard interrupt exit code
 
     except FileNotFoundError as e:
-        print(f"\n{'=' * 70}")
-        print("  PIPELINE FAILED: File Not Found")
-        print(f"{'=' * 70}")
-        print(f"\nError: {e}")
-        print("\nPossible solutions:")
+        print("\nPipeline failed: File Not Found")
+        print(f"Error: {e}")
+        print("Possible solutions:")
         print("  1. Ensure raw data files exist in data/raw/")
         print("  2. Run stages in order (1 -> 2 -> 3 -> 4)")
         print("  3. Set SKIP_API_CALLS = False to fetch fresh data")
         return 1
 
     except Exception as e:
-        print(f"\n{'=' * 70}")
-        print("  PIPELINE FAILED: Unexpected Error")
-        print(f"{'=' * 70}")
-        print(f"\nError type: {type(e).__name__}")
+        print("\nPipeline failed: Unexpected Error")
+        print(f"Error type: {type(e).__name__}")
         print(f"Error message: {e}")
         print("\nFull traceback:")
         import traceback
