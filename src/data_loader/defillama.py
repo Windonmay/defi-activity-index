@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from defillama_sdk import DefiLlama
 
-# 路径配置
+# Path configuration
 current_file = Path(__file__).resolve()
 project_root = current_file.parent.parent.parent
 if str(project_root) not in sys.path:
@@ -19,9 +19,9 @@ class DeFiLlamaLoader:
     def __init__(self):
         self.save_dir = Path(DATA_RAW_API_DIR)
         self.save_dir.mkdir(parents=True, exist_ok=True)
-        # 初始化 Session，保持连接复用
+        # Initialize session for connection reuse
         self.session = requests.Session()
-        # 设置浏览器 Headers，解决 403/429 报错
+        # Set browser headers to resolve 403/429 errors
         self.session.headers.update({
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "application/json, text/plain, */*",
@@ -32,57 +32,57 @@ class DeFiLlamaLoader:
 
     def fetch_protocol_data(self, protocol_name, protocol_slug):
         """
-        对应官方文档: GET /protocol/{slug}
-        该接口返回协议的完整历史 TVL 数据。
+        Fetch protocol TVL data from DeFiLlama API.
+        API endpoint: GET /protocol/{slug}
+        Returns complete historical TVL data for the protocol.
         """
         url = f"{DEFILLAMA_BASE_URL}/protocol/{protocol_slug}"
         print(f"\n[Request] Fetching {protocol_name} -> {url}")
 
         try:
             response = self.session.get(url, timeout=30)
-            
-            # 状态码检查
+
+            # Status code check
             if response.status_code == 404:
                 print(f"Error 404: Protocol slug '{protocol_slug}' not found.")
                 return None
             elif response.status_code == 429:
                 print(f"Error 429: Rate limited. Sleeping for 10s...")
                 time.sleep(10)
-                return self.fetch_protocol_data(protocol_name, protocol_slug) # 重试
+                return self.fetch_protocol_data(protocol_name, protocol_slug)
             elif response.status_code != 200:
                 print(f"Error {response.status_code}: {response.text[:100]}")
                 return None
 
             data = response.json()
 
-            # --- 数据解析逻辑 ---
-            
+            # Data parsing logic
             tvl_data = []
-            
-            # 1. 优先查找根目录下的 'tvl' (Aggregated TVL)
+
+            # Priority 1: Look for 'tvl' in root (Aggregated TVL)
             if 'tvl' in data and isinstance(data['tvl'], list):
                 print(f"Found aggregated TVL data ({len(data['tvl'])} points).")
                 tvl_data = data['tvl']
-            
-            # 2. 如果没有，查找 'chainTvls' (分链 TVL)
+
+            # Priority 2: Look for 'chainTvls' (per-chain TVL)
             elif 'chainTvls' in data:
-                # 优先找 Ethereum，因为它是 DeFi 主战场
+                # Prefer Ethereum as the main DeFi battlefield
                 if 'Ethereum' in data['chainTvls'] and 'tvl' in data['chainTvls']['Ethereum']:
                     print("Using 'Ethereum' chain TVL.")
                     tvl_data = data['chainTvls']['Ethereum']['tvl']
                 else:
-                    # 否则取 TVL 最大的那条链
+                    # Otherwise, take the chain with largest TVL
                     max_chain = None
                     max_val = 0
                     for chain, chain_data in data['chainTvls'].items():
-                        # 取最新的一条数据比较大小
+                        # Compare latest data point
                         if 'tvl' in chain_data and len(chain_data['tvl']) > 0:
                             last_tvl = chain_data['tvl'][-1]['totalLiquidityUSD']
                             if last_tvl > max_val:
                                 max_val = last_tvl
                                 max_chain = chain
                                 tvl_data = chain_data['tvl']
-                    
+
                     if max_chain:
                         print(f"Using '{max_chain}' chain TVL (Largest).")
 
@@ -90,22 +90,22 @@ class DeFiLlamaLoader:
                 print("No TVL data found in response.")
                 return None
 
-            # --- 转换为 DataFrame ---
+            # Convert to DataFrame
             df = pd.DataFrame(tvl_data)
-            
-            # 数据清洗：转换时间戳，重命名列
+
+            # Data cleaning: convert timestamp, rename columns
             if 'date' in df.columns:
                 df['date'] = pd.to_datetime(df['date'], unit='s')
-            
+
             if 'totalLiquidityUSD' in df.columns:
                 df = df.rename(columns={'totalLiquidityUSD': 'tvl'})
-            
-            # 筛选最终列
+
+            # Select final columns
             final_df = df[['date', 'tvl']].copy()
-            
-            # 过滤掉未来的数据（API有时会返回当天之后的时间戳）
+
+            # Filter out future data (API sometimes returns timestamps after today)
             final_df = final_df[final_df['date'] <= pd.Timestamp.now()]
-            
+
             return final_df
 
         except requests.exceptions.JSONDecodeError:
@@ -115,9 +115,12 @@ class DeFiLlamaLoader:
         except Exception as e:
             print(f"Exception: {str(e)}")
             return None
-    
-    def fetch_dex_volume(self, protocol_name, protocol_slug):
 
+    def fetch_dex_volume(self, protocol_name, protocol_slug):
+        """
+        Fetch DEX trading volume from DeFiLlama API.
+        API endpoint: GET /summary/dexs/{protocol_slug}
+        """
         url = f"{DEFILLAMA_BASE_URL}/summary/dexs/{protocol_slug}"
         print(f"\n[Request] Fetching DEX Volume {protocol_name} -> {url}")
 
@@ -141,9 +144,7 @@ class DeFiLlamaLoader:
                 print("No volume data found.")
                 return None
 
-            # -----------------------------------
-            # 转换为 DataFrame
-            # -----------------------------------
+            # Convert to DataFrame
             df = pd.DataFrame(
                 data["totalDataChart"],
                 columns=["timestamp", "volume"]
@@ -160,15 +161,13 @@ class DeFiLlamaLoader:
         except Exception as e:
             print(f"Exception: {str(e)}")
             return None
-        
+
     def fetch_protocol_fees(self, protocol_name, protocol_slug):
         """
-        对应官方文档:
-        GET /summary/fees/{protocol}
-
-        返回协议 fees / revenue 的历史数据
+        Fetch protocol fees from DeFiLlama API.
+        API endpoint: GET /summary/fees/{protocol}
+        Returns historical fees/revenue data.
         """
-
         url = f"{DEFILLAMA_BASE_URL}/summary/fees/{protocol_slug}"
         print(f"\n[Request] Fetching Fees {protocol_name} -> {url}")
 
@@ -190,9 +189,7 @@ class DeFiLlamaLoader:
 
             data = response.json()
 
-            # -----------------------------------
-            # 数据解析
-            # -----------------------------------
+            # Data parsing
             if "totalDataChart" not in data:
                 print("No fees data found.")
                 return None
@@ -206,7 +203,7 @@ class DeFiLlamaLoader:
 
             final_df = df[["date", "fees"]].copy()
 
-            # 去掉未来时间
+            # Remove future dates
             final_df = final_df[final_df["date"] <= pd.Timestamp.now()]
 
             return final_df
@@ -214,14 +211,12 @@ class DeFiLlamaLoader:
         except Exception as e:
             print(f"Exception: {str(e)}")
             return None
-        
+
     def fetch_protocol_revenue(self, protocol_name, protocol_slug):
         """
-        获取 Protocol Revenue (Daily)
-        对应接口:
-        GET /summary/fees/{protocol}?dataType=dailyRevenue
+        Fetch protocol daily revenue from DeFiLlama API.
+        API endpoint: GET /summary/fees/{protocol}?dataType=dailyRevenue
         """
-
         url = f"{DEFILLAMA_BASE_URL}/summary/fees/{protocol_slug}?dataType=dailyRevenue"
         print(f"\n[Request] Fetching Revenue {protocol_name} -> {url}")
 
@@ -247,9 +242,7 @@ class DeFiLlamaLoader:
                 print("No revenue data found.")
                 return None
 
-            # -----------------------------------
-            # 转换为 DataFrame
-            # -----------------------------------
+            # Convert to DataFrame
             df = pd.DataFrame(
                 data["totalDataChart"],
                 columns=["timestamp", "revenue"]
@@ -266,15 +259,15 @@ class DeFiLlamaLoader:
         except Exception as e:
             print(f"Exception: {str(e)}")
             return None
-        
+
     def run_stablecoin_raw_data_job(self):
         """
-        Batch Job: 抓取 MakerDAO / DAI 原始数据，并保存 CSV
+        Batch job: fetch MakerDAO/DAI raw data and save to CSV.
         """
         print("\n=== Starting Stablecoin Raw Data Batch Job ===")
         print(f"Storage Path: {self.save_dir}")
 
-        # 当前仅处理 DAI，可后续扩展其他 stablecoin
+        # Currently only processes DAI, can be extended to other stablecoins
         stablecoins_to_fetch = [
             {"name": "MakerDAO", "symbol": "DAI", "asset_id": 5}
         ]
@@ -293,10 +286,10 @@ class DeFiLlamaLoader:
                 response.raise_for_status()
                 data = response.json()
 
-                # 转换为 DataFrame（保留所有字段）
+                # Convert to DataFrame (preserve all fields)
                 df = pd.json_normalize(data)
 
-                # 生成文件名
+                # Generate filename
                 safe_name = name.lower().replace(" ", "_")
                 filename = f"stablecoin_raw_{safe_name}.csv"
                 self.save_to_csv(df, filename)
@@ -304,7 +297,7 @@ class DeFiLlamaLoader:
             except Exception as e:
                 print(f"An error occurred for {name}: {e}")
 
-            # 延时，防止 API 封 IP
+            # Delay to prevent API IP blocking
             time.sleep(3)
 
         print("\n=== Stablecoin Raw Data Job Completed ===")
@@ -317,34 +310,32 @@ class DeFiLlamaLoader:
     def run_tvl_batch_job(self):
         print("=== Starting DeFiLlama TVL Batch Job ===")
         print(f"Storage Path: {self.save_dir}")
-        
+
         for name, info in PROTOCOLS.items():
-            # 获取 slug
+            # Get slug
             slug = info['slug'] if isinstance(info, dict) else info
-            
+
             df = self.fetch_protocol_data(name, slug)
-            
+
             if df is not None:
-                # 生成文件名: tvl_aave_v3.csv
+                # Generate filename: tvl_aave_v3.csv
                 safe_name = name.lower().replace(" ", "_")
                 filename = f"tvl_{safe_name}.csv"
                 self.save_to_csv(df, filename)
-            
-            # 延时，防止封IP
+
+            # Delay to prevent IP blocking
             time.sleep(3)
 
         print("\n=== Batch Job Completed ===")
 
     def run_dex_volume_batch_job(self):
-
         print("\n=== Starting DEX Volume Batch Job ===")
 
         for name, info in PROTOCOLS.items():
-
             slug = info['slug']
             protocol_type = info.get("type", "")
 
-            # 只抓 DEX
+            # Only fetch DEX data
             if protocol_type != "DEX":
                 continue
 
@@ -360,11 +351,9 @@ class DeFiLlamaLoader:
         print("\n=== DEX Volume Job Completed ===")
 
     def run_fees_batch_job(self):
-
         print("\n=== Starting Fees Batch Job ===")
 
         for name, info in PROTOCOLS.items():
-
             slug = info['slug']
 
             df = self.fetch_protocol_fees(name, slug)
@@ -379,11 +368,9 @@ class DeFiLlamaLoader:
         print("\n=== Fees Batch Job Completed ===")
 
     def run_revenue_batch_job(self):
-
         print("\n=== Starting Protocol Revenue Batch Job ===")
 
         for name, info in PROTOCOLS.items():
-
             slug = info["slug"]
 
             df = self.fetch_protocol_revenue(name, slug)
@@ -400,7 +387,3 @@ class DeFiLlamaLoader:
 
 if __name__ == "__main__":
     loader = DeFiLlamaLoader()
-
-    #loader.run_tvl_batch_job()
-    #loader.run_dex_volume_batch_job()
-    

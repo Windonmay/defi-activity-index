@@ -241,4 +241,4 @@ if __name__ == "__main__":
 
     output_file = OUTPUT_DIR / 'final_index_5dim.csv'
     index_df.to_csv(output_file, index=False)
-    print(f"\n✓ Saved: {output_file}")
+    print(f"\n  Saved: {output_file}")

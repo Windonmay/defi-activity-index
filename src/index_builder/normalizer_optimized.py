@@ -265,7 +265,7 @@ if __name__ == "__main__":
 
     output_mm = OUTPUT_DIR / 'normalized_minmax_log.csv'
     df_mm.to_csv(output_mm, index=False)
-    print(f"\n Saved: {output_mm}")
+    print(f"\n  Saved: {output_mm}")
 
     # Z-Score Normalization (Backup)
     print("\n" + "=" * 60)
@@ -281,4 +281,4 @@ if __name__ == "__main__":
 
     output_zs = OUTPUT_DIR / 'normalized_zscore_log.csv'
     df_zs.to_csv(output_zs, index=False)
-    print(f"\n Saved: {output_zs}")
+    print(f"\n  Saved: {output_zs}")

@@ -492,8 +492,6 @@ def create_comparison_summary(analysis_df, output_dir, r_dai, r_tvl):
     ax2.grid(True, alpha=0.3)
     ax2.legend(loc='lower right', fontsize=8, ncol=2)
 
-    
-
     plt.tight_layout()
 
     output_path = output_dir / 'figure_comparison.png'
