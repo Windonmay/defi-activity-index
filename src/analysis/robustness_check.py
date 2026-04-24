@@ -13,8 +13,8 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# Fundamental weights
-WEIGHTS_FUND = [0.05, 0.15, 0.45, 0.05, 0.30]
+# Equal weights (20% each) - consistent with main index construction
+WEIGHTS_EQUAL = [0.20, 0.20, 0.20, 0.20, 0.20]
 
 
 def get_project_root():
@@ -27,9 +27,9 @@ def load_minmax_data(project_root):
     df['date'] = pd.to_datetime(df['date'])
     df = df.sort_values(['protocol', 'date']).reset_index(drop=True)
 
-    # Calculate DAI_FUND
+    # Calculate DAI_Equal
     dims = ['D1_Capital', 'D2_Liquidity', 'D3_User_Activity', 'D4_Operational_Output', 'D5_Financial']
-    df['DAI_FUND'] = df[dims].dot(WEIGHTS_FUND)
+    df['DAI_Equal'] = df[dims].dot(WEIGHTS_EQUAL)
 
     return df
 
@@ -57,7 +57,7 @@ def load_zscore_data(project_root):
     df['D5_Financial'] = df['Revenue_score']
 
     dims = ['D1_Capital', 'D2_Liquidity', 'D3_User_Activity', 'D4_Operational_Output', 'D5_Financial']
-    df['DAI_FUND'] = df[dims].dot(WEIGHTS_FUND)
+    df['DAI_Equal'] = df[dims].dot(WEIGHTS_EQUAL)
 
     return df
 
@@ -128,8 +128,8 @@ def main():
     print("    Testing: Index -> Market Cap (7-day lag)")
     print()
 
-    granger_mm = run_granger_tests(df_mm, 'DAI_FUND')
-    granger_zs = run_granger_tests(df_zs, 'DAI_FUND')
+    granger_mm = run_granger_tests(df_mm, 'DAI_Equal')
+    granger_zs = run_granger_tests(df_zs, 'DAI_Equal')
 
     # Merge results
     comparison = granger_mm.merge(granger_zs, on='protocol', suffixes=('_MM', '_ZS'))
