@@ -1,6 +1,6 @@
 """
 Event Study & Cross-Sectional Stability Analysis
-Visualizes the responsiveness of the DAI composite index vs. TVL in Fundamental weights [5%, 15%, 45%, 5%, 30%].
+Visualizes the responsiveness of the DAI composite index vs. TVL in Equal weights [20%, 20%, 20%, 20%, 20%].
 """
 
 import pandas as pd
@@ -13,9 +13,7 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# ---------------------------------------------------------
 # Configuration & Styling
-# ---------------------------------------------------------
 sns.set_theme(style="whitegrid", context="paper", font_scale=1.2)
 
 # 5 Core Dimensions
@@ -27,9 +25,9 @@ DIMENSIONS = [
     'D5_Financial'
 ]
 
-# Fundamental weights (optimal based on Granger causality analysis)
-# D1=5%, D2=15%, D3=45%, D4=5%, D5=30%
-WEIGHTS_FUND = [0.05, 0.15, 0.45, 0.05, 0.30]
+# Equal weights (baseline specification for primary DAI)
+# D1=20%, D2=20%, D3=20%, D4=20%, D5=20%
+WEIGHTS_EQUAL = [0.20, 0.20, 0.20, 0.20, 0.20]
 
 # Recommended protocols with meaningful events
 EVENTS = {
@@ -39,7 +37,7 @@ EVENTS = {
     ],
     'aave_v3': [
         ('2025-08-05', 'Flash Crash'),
-        ('2025-11-15', 'Liquidity Crisis')
+        ('2025-11-15', 'Crypto Market Sell-off')
     ]
 }
 
@@ -49,7 +47,7 @@ def get_project_root():
 
 
 def load_and_prep_data(project_root):
-    """Load data and calculate DAI_FUND with Fundamental weights."""
+    """Load data and calculate DAI_EQUAL with Equal weights."""
     data_path = project_root / 'data' / 'analysis' / 'final_index_with_mcap.csv'
 
     if not data_path.exists():
@@ -58,9 +56,9 @@ def load_and_prep_data(project_root):
     df = pd.read_csv(data_path)
     df['date'] = pd.to_datetime(df['date'])
 
-    # Calculate DAI_FUND using Fundamental weights
-    # Weights: D1_Capital=5%, D2_Liquidity=15%, D3_User_Activity=45%, D4_Output=5%, D5_Financial=30%
-    df['DAI_FUND'] = df[DIMENSIONS].dot(WEIGHTS_FUND)
+    # Calculate DAI_EQUAL using Equal weights
+    # Weights: D1_Capital=20%, D2_Liquidity=20%, D3_User_Activity=20%, D4_Output=20%, D5_Financial=20%
+    df['DAI_EQUAL'] = df[DIMENSIONS].dot(WEIGHTS_EQUAL)
 
     return df
 
@@ -79,15 +77,15 @@ def plot_event_study(df, protocol, events, output_dir):
         return None
 
     # Calculate correlation statistics
-    corr_dai = proto_df['DAI_FUND'].corr(proto_df['mcap'])
+    corr_dai = proto_df['DAI_EQUAL'].corr(proto_df['mcap'])
     corr_tvl = proto_df['tvl_score'].corr(proto_df['mcap'])
-    dai_vol = proto_df['DAI_FUND'].std()
+    dai_vol = proto_df['DAI_EQUAL'].std()
     tvl_vol = proto_df['tvl_score'].std()
     dai_adv = corr_dai - corr_tvl
 
     # Smooth series with 7-day rolling average
     proto_df['mcap_smooth'] = proto_df['mcap'].rolling(window=7, min_periods=1).mean()
-    proto_df['dai_smooth'] = proto_df['DAI_FUND'].rolling(window=7, min_periods=1).mean()
+    proto_df['dai_smooth'] = proto_df['DAI_EQUAL'].rolling(window=7, min_periods=1).mean()
     proto_df['tvl_smooth'] = proto_df['tvl_score'].rolling(window=7, min_periods=1).mean()
 
     # Create figure with two subplots (stacked)
@@ -107,7 +105,7 @@ def plot_event_study(df, protocol, events, output_dir):
     ax1.set_ylabel('Market Cap ($B)', color='gray', fontsize=11, fontweight='bold')
     ax1.tick_params(axis='y', labelcolor='gray')
 
-    # DAI_FUND (green solid)
+    # DAI_EQUAL (green solid)
     ax1_twin.plot(proto_df['date'], proto_df['dai_smooth'],
                   color='#2E7D32', linewidth=2.5,
                   label=f'DAI Index (r={corr_dai:.3f})')
@@ -128,9 +126,7 @@ def plot_event_study(df, protocol, events, output_dir):
                   fontweight='bold', fontsize=12, pad=10)
     ax1.legend(loc='upper left', frameon=True)
 
-    # ========================================
     # Panel B: TVL vs Market Cap
-    # ========================================
     ax2_twin = ax2.twinx()
 
     # Market Cap (grey area)
@@ -167,7 +163,7 @@ def plot_event_study(df, protocol, events, output_dir):
 
     # Main title
     fig.suptitle(f'Event Study: DAI Index vs TVL — {protocol.upper()}\n'
-                 f'Fundamental Weights [D1=5%, D2=15%, D3=45%, D4=5%, D5=30%]',
+                 f'Equal Weights [D1=20%, D2=20%, D3=20%, D4=20%, D5=20%]',
                  fontsize=14, fontweight='bold', y=1.02)
 
     plt.tight_layout()
